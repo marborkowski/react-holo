@@ -6,6 +6,11 @@ const meta = {
   component: Hologram,
   tags: ['autodocs'],
   argTypes: {
+    variant: {
+      control: 'radio',
+      options: ['foil', 'beam'],
+      description: 'Visual variant: realistic foil or sci-fi beam',
+    },
     color: {
       control: 'select',
       options: ['cyan', 'green', 'magenta', 'gold', 'rainbow'],
@@ -38,14 +43,127 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/* ==================================================================
+   FOIL VARIANT — realistic holographic material
+   ================================================================== */
+
+/**
+ * **Default foil hologram (rainbow).** The surface shows a full-spectrum
+ * rainbow diffraction pattern with a chrome metallic base. Move your mouse
+ * to see the rainbow shift and the specular highlight follow.
+ */
+export const FoilDefault: Story = {
+  args: {
+    variant: 'foil',
+    color: 'rainbow',
+    children: (
+      <div style={{ padding: '2rem 3rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '0.2em' }}>
+          HOLOGRAM
+        </div>
+        <div style={{ fontSize: '0.75rem', letterSpacing: '0.4em', marginTop: '0.3rem', opacity: 0.7 }}>
+          AUTHENTIC PRODUCT
+        </div>
+      </div>
+    ),
+  },
+};
+
 /* ------------------------------------------------------------------ */
 
 /**
- * Default hologram with cyan color preset.
- * Move your mouse around to see the interactive effect.
+ * **Foil with a background image.** The image is blended onto the foil via
+ * `mix-blend-mode: multiply` — dark areas "print" onto the surface, light
+ * areas reveal the rainbow foil underneath. This matches how real holographic
+ * stickers are manufactured.
  */
-export const Default: Story = {
+export const FoilWithImage: Story = {
   args: {
+    variant: 'foil',
+    color: 'rainbow',
+    backgroundImage: 'https://picsum.photos/seed/holo/800/400',
+    children: (
+      <div style={{ padding: '3rem 4rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '0.2em' }}>
+          VERIFIED
+        </div>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.4em', marginTop: '0.3rem', opacity: 0.7 }}>
+          SECURITY LABEL
+        </div>
+      </div>
+    ),
+    style: { width: 500, minHeight: 180 },
+  },
+};
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * **All foil color presets side by side.** Each preset biases the rainbow
+ * spectrum toward a particular hue family and sets the metallic base tone.
+ */
+export const FoilColorPresets: Story = {
+  args: { children: 'presets' },
+  render: () => {
+    const presets = ['rainbow', 'cyan', 'green', 'magenta', 'gold'] as const;
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+        {presets.map((preset) => (
+          <Hologram
+            key={preset}
+            variant="foil"
+            color={preset}
+            style={{
+              padding: '1.5rem 2rem',
+              fontSize: '1.3rem',
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {preset}
+          </Hologram>
+        ))}
+      </div>
+    );
+  },
+};
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * **Gold foil preset.** Warm brass metallic base with gold-biased rainbow.
+ * Reminiscent of premium holographic seals.
+ */
+export const FoilGold: Story = {
+  args: {
+    variant: 'foil',
+    color: 'gold',
+    children: (
+      <div style={{ padding: '2.5rem 3rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '0.15em' }}>
+          PREMIUM
+        </div>
+        <div style={{ fontSize: '0.7rem', letterSpacing: '0.35em', marginTop: '0.3rem', opacity: 0.7 }}>
+          CERTIFICATE OF AUTHENTICITY
+        </div>
+      </div>
+    ),
+  },
+};
+
+/* ==================================================================
+   BEAM VARIANT — sci-fi projected hologram
+   ================================================================== */
+
+/**
+ * **Default beam hologram (cyan).** Glowing text with chromatic aberration,
+ * scanlines, and edge bloom. The classic sci-fi projected-hologram look.
+ */
+export const BeamDefault: Story = {
+  args: {
+    variant: 'beam',
+    color: 'cyan',
     children: 'HOLOGRAM',
     style: { padding: '2rem 3rem', fontSize: '3rem', fontWeight: 700, letterSpacing: '0.15em' },
   },
@@ -54,13 +172,14 @@ export const Default: Story = {
 /* ------------------------------------------------------------------ */
 
 /**
- * A hologram with a background image. The image is automatically
- * converted to a holographic color palette using CSS filters.
+ * **Beam with a background image.** The image is re-graded to a
+ * monochromatic holographic palette via CSS filters.
  */
-export const WithBackgroundImage: Story = {
+export const BeamWithImage: Story = {
   args: {
-    backgroundImage: 'https://picsum.photos/seed/holo/800/400',
+    variant: 'beam',
     color: 'cyan',
+    backgroundImage: 'https://picsum.photos/seed/holo/800/400',
     children: (
       <div style={{ padding: '3rem 4rem', textAlign: 'center' }}>
         <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800, letterSpacing: '0.2em' }}>
@@ -78,42 +197,12 @@ export const WithBackgroundImage: Story = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Comparison of all available color presets side by side.
+ * **Beam — large cinematic heading.** High intensity with strong
+ * chromatic aberration for maximum visual impact.
  */
-export const ColorPresets: Story = {
-  args: { children: 'presets' },
-  render: () => {
-    const presets = ['cyan', 'green', 'magenta', 'gold', 'rainbow'] as const;
-    return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
-        {presets.map((preset) => (
-          <Hologram
-            key={preset}
-            color={preset}
-            style={{
-              padding: '1.5rem 2rem',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {preset}
-          </Hologram>
-        ))}
-      </div>
-    );
-  },
-};
-
-/* ------------------------------------------------------------------ */
-
-/**
- * Large cinematic heading — the kind you'd see floating in a
- * sci-fi control room.
- */
-export const LargeDisplay: Story = {
+export const BeamLargeDisplay: Story = {
   args: {
+    variant: 'beam',
     color: 'cyan',
     intensity: 0.9,
     chromaticAberration: 3,
@@ -141,11 +230,12 @@ export const LargeDisplay: Story = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Shows that the hologram container accepts arbitrary React content,
- * not just text.
+ * **Beam — green terminal readout.** Custom content demonstrating that
+ * the hologram container accepts arbitrary React nodes.
  */
-export const CustomContent: Story = {
+export const BeamTerminal: Story = {
   args: {
+    variant: 'beam',
     color: 'green',
     children: (
       <div style={{ padding: '2rem', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: 1.8 }}>
@@ -166,50 +256,12 @@ export const CustomContent: Story = {
 /* ------------------------------------------------------------------ */
 
 /**
- * With a background image and the warm gold hologram preset.
+ * **Beam — rainbow preset.** Full-spectrum iridescent text with animated
+ * rainbow gradient.
  */
-export const GoldWithBackground: Story = {
+export const BeamRainbow: Story = {
   args: {
-    backgroundImage: 'https://picsum.photos/seed/temple/800/400',
-    color: 'gold',
-    intensity: 0.8,
-    children: (
-      <div style={{ padding: '3rem', textAlign: 'center' }}>
-        <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800, letterSpacing: '0.15em' }}>
-          ARCHIVE
-        </h2>
-        <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', letterSpacing: '0.35em', opacity: 0.7 }}>
-          CLASSIFIED RECORDS
-        </p>
-      </div>
-    ),
-    style: { width: 500, minHeight: 180 },
-  },
-};
-
-/* ------------------------------------------------------------------ */
-
-/**
- * Static hologram with all interactive/animated effects disabled.
- * Useful as a baseline for visual comparison.
- */
-export const Static: Story = {
-  args: {
-    interactive: false,
-    glitch: false,
-    flickerIntensity: 0,
-    children: 'STATIC',
-    style: { padding: '2rem 3rem', fontSize: '2.5rem', fontWeight: 700, letterSpacing: '0.15em' },
-  },
-};
-
-/* ------------------------------------------------------------------ */
-
-/**
- * Rainbow iridescent preset — cycles through the full spectrum.
- */
-export const Rainbow: Story = {
-  args: {
+    variant: 'beam',
     color: 'rainbow',
     backgroundImage: 'https://picsum.photos/seed/abstract/800/400',
     intensity: 0.85,

@@ -2,16 +2,17 @@
 
 A React component that renders text and images with a **realistic hologram effect**, driven by device gyroscope or mouse input.
 
-![Default hologram](docs/screenshots/default.png)
+![Holographic foil default](docs/screenshots/foil-default.png)
 
 ---
 
 ## Features
 
-- **Holographic color conversion** — any background image is automatically re-graded to a holographic palette via CSS filters (grayscale → sepia → hue-rotate → saturate).
+- **Two visual variants** — realistic holographic foil (`foil`) and sci-fi projected hologram (`beam`).
+- **Holographic foil simulation** — conic rainbow diffraction, chrome metallic base, micro-line grating, specular highlight, and Fresnel edge glow — matching real-world holographic stickers.
+- **Background image support** — in foil mode, images are blended via `multiply` (dark areas = ink, light areas = foil). In beam mode, images are re-graded to a holographic palette via CSS filters.
 - **Gyroscope-driven interactivity** — reads `DeviceOrientationEvent` on mobile; falls back to mouse-position tracking on desktop.
-- **9 layered visual effects** — scanlines, chromatic aberration, specular light-band, film-grain noise, glow, flicker, glitch, iridescent gradient overlay, and edge bloom — all GPU-accelerated.
-- **5 color presets** — `cyan`, `green`, `magenta`, `gold`, `rainbow`; or pass any CSS color.
+- **5 color presets** — `rainbow`, `cyan`, `green`, `magenta`, `gold`; or pass any CSS color.
 - **Accessible** — respects `prefers-reduced-motion`, uses appropriate ARIA attributes.
 - **Tree-shakeable, zero runtime dependencies** — peer-depends on React ≥ 18 only.
 - **TypeScript-first** — ships full type declarations and JSDoc on every export.
@@ -37,29 +38,53 @@ import 'react-holo/style.css';
 function App() {
   return (
     <Hologram>
-      HELLO WORLD
+      HOLOGRAM TEXT
     </Hologram>
   );
 }
 ```
 
+The default variant is `foil` — a realistic holographic material surface with dark text on top.
+
 ---
 
-## With a background image
+## Variants
+
+### `variant="foil"` (default) — Realistic holographic material
+
+Simulates real-world holographic foil / security-label material:
 
 ```tsx
-<Hologram
-  backgroundImage="/hero.jpg"
-  color="magenta"
-  intensity={0.9}
->
-  <h1>Cyberpunk Title</h1>
+<Hologram variant="foil" color="rainbow">
+  <h1>AUTHENTIC PRODUCT</h1>
 </Hologram>
 ```
 
-The background image is automatically converted to the holographic color palette. The `color` prop controls which hue family is used.
+![Foil default](docs/screenshots/foil-default.png)
 
-![Hologram with background image](docs/screenshots/with-background-image.png)
+Background images are blended via `mix-blend-mode: multiply` — dark areas of the image appear as "ink" printed on the foil, light areas reveal the rainbow beneath:
+
+```tsx
+<Hologram variant="foil" backgroundImage="/logo.png">
+  <h1>VERIFIED</h1>
+</Hologram>
+```
+
+![Foil with image](docs/screenshots/foil-with-image.png)
+
+### `variant="beam"` — Sci-fi projected hologram
+
+Glowing text with chromatic aberration, scanlines, and edge bloom:
+
+```tsx
+<Hologram variant="beam" color="cyan">
+  <h1>SYSTEM ONLINE</h1>
+</Hologram>
+```
+
+![Beam default](docs/screenshots/beam-default.png)
+
+![Beam large display](docs/screenshots/beam-large-display.png)
 
 ---
 
@@ -67,16 +92,17 @@ The background image is automatically converted to the holographic color palette
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
+| `variant` | `'foil' \| 'beam'` | `'foil'` | Visual variant: realistic foil material or sci-fi projected hologram. |
 | `children` | `ReactNode` | — | Content rendered inside the hologram. |
-| `backgroundImage` | `string` | — | URL of a background image; converted to holographic colors automatically. |
-| `color` | `HologramColorPreset \| string` | `'cyan'` | Color preset (`'cyan'`, `'green'`, `'magenta'`, `'gold'`, `'rainbow'`) or any CSS color. |
-| `intensity` | `number` | `0.7` | Overall effect intensity (0–1). Controls hue-shift, parallax, chromatic aberration magnitude. |
-| `scanlineSpeed` | `number` | `8` | Scanline scroll cycle duration in seconds. Lower = faster. |
+| `backgroundImage` | `string` | — | URL of a background image. Behavior depends on variant (see above). |
+| `color` | `HologramColorPreset \| string` | `'rainbow'` (foil) / `'cyan'` (beam) | Color preset or any CSS color. |
+| `intensity` | `number` | `0.7` | Overall effect intensity (0–1). |
+| `scanlineSpeed` | `number` | `8` | Scanline scroll cycle duration in seconds. |
 | `flickerIntensity` | `number` | `0.3` | Random flicker strength (0–1). |
-| `chromaticAberration` | `number` | `2` | RGB channel-split offset in pixels (0–5). |
+| `chromaticAberration` | `number` | `2` | RGB channel-split offset in pixels (0–5). Primarily visible in beam variant. |
 | `glitch` | `boolean` | `true` | Enable/disable random glitch bursts. |
 | `glitchInterval` | `[number, number]` | `[2000, 6000]` | Min/max interval (ms) between glitch events. |
-| `interactive` | `boolean` | `true` | Track gyroscope / mouse to drive dynamic effects. Set `false` for a static hologram. |
+| `interactive` | `boolean` | `true` | Track gyroscope / mouse to drive dynamic effects. |
 | `className` | `string` | — | Extra CSS class on the root element. |
 | `style` | `CSSProperties` | — | Inline styles on the root element. |
 
@@ -84,65 +110,77 @@ The background image is automatically converted to the holographic color palette
 
 ## Color presets
 
-| Preset | Primary | Description |
+![All foil color presets](docs/screenshots/foil-color-presets.png)
+
+| Preset | Foil behavior | Beam behavior |
 |---|---|---|
-| `cyan` | `#00f0ff` | Classic sci-fi hologram (default) |
-| `green` | `#00ff41` | Matrix / retro terminal |
-| `magenta` | `#ff00ff` | Vibrant neon pink |
-| `gold` | `#ffd700` | Warm golden amber |
-| `rainbow` | multi | Full-spectrum iridescent cycle |
+| `rainbow` | Neutral silver base, full-spectrum rainbow (default for foil) | Animated rainbow gradient text |
+| `cyan` | Cool silver-blue metallic base | Classic sci-fi cyan glow (default for beam) |
+| `green` | Green-biased metallic base | Matrix / retro terminal |
+| `magenta` | Pink/purple-biased metallic base | Vibrant neon pink glow |
+| `gold` | Warm brass metallic base | Golden amber glow |
 
-You can also pass any valid CSS color (e.g. `'#ff4500'`, `'hotpink'`). The component will derive the hue automatically for the image filter and use the raw color for glows and text.
-
-![All color presets](docs/screenshots/color-presets.png)
+You can also pass any valid CSS color (e.g. `'#ff4500'`). The component derives the hue automatically.
 
 ---
 
 ## Screenshots
 
-### Large display
+### Gold foil preset
 
-Cinematic heading — the kind you'd see floating in a sci-fi control room.
+Warm brass metallic base with gold-biased rainbow diffraction.
 
-![Large display](docs/screenshots/large-display.png)
+![Gold foil](docs/screenshots/foil-gold.png)
 
-### Custom content (green preset)
+### Beam — terminal readout (green preset)
 
 The hologram container accepts arbitrary React content, not just text.
 
-![Custom content](docs/screenshots/custom-content.png)
+![Beam terminal](docs/screenshots/beam-terminal.png)
 
-### Gold preset with background image
+### Beam — with background image
 
-![Gold with background](docs/screenshots/gold-with-background.png)
+Background images are re-graded to a monochromatic holographic palette.
 
-### Rainbow (iridescent) mode
+![Beam with image](docs/screenshots/beam-with-image.png)
 
-Full-spectrum iridescent preset — cycles through the entire color wheel.
+### Beam — rainbow (iridescent) mode
 
-![Rainbow mode](docs/screenshots/rainbow.png)
+![Beam rainbow](docs/screenshots/beam-rainbow.png)
 
 ---
 
 ## How it works
 
-### Visual layers (bottom → top)
+### Foil variant — visual layers (bottom → top)
 
-1. **Background image** — filtered with `grayscale(0.8) brightness(1.3) contrast(1.1) sepia(1) hue-rotate(N) saturate(2)`.
-2. **Gradient overlay** — multi-stop holographic gradient blended via `mix-blend-mode: screen`.
+1. **Chrome metallic base** — multi-stop linear gradient (silver, gold, etc.).
+2. **Conic rainbow diffraction** — `conic-gradient` covering the full spectrum, blended via `mix-blend-mode: color`.
+3. **Secondary rainbow band** — offset linear gradient for spatial color variation, blended via `overlay`.
+4. **Micro-line diffraction grating** — `repeating-linear-gradient` (1–2 px) simulating physical holographic foil texture.
+5. **Specular highlight** — `radial-gradient` bright spot that follows device orientation.
+6. **Fresnel edge glow** — perimeter brightening.
+7. **Background image** — blended via `multiply` (dark = ink, light = foil).
+8. **Content** — rendered in dark color with subtle emboss shadow.
+
+### Beam variant — visual layers
+
+1. **Background image** — filtered with `grayscale → sepia → hue-rotate → saturate`.
+2. **Gradient overlay** — blended via `mix-blend-mode: screen`.
 3. **Scanlines** — `repeating-linear-gradient` scrolling vertically.
-4. **Light band** — specular highlight whose position follows the orientation input.
-5. **Film-grain noise** — SVG `feTurbulence` rendered as a tiling background.
-6. **Content** — children rendered with chromatic-aberration `text-shadow`, colored glow, and dynamic `hue-rotate`.
+4. **Light band** — specular highlight that follows orientation.
+5. **Film-grain noise** — SVG `feTurbulence` tiling texture.
+6. **Content** — chromatic-aberration `text-shadow`, colored glow, and dynamic `hue-rotate`.
 
 ### Interactivity
 
 On mobile, the component listens to `DeviceOrientationEvent` (beta/gamma axes). On desktop, it tracks the mouse position within the viewport. Raw values are normalized to `[-1, 1]` and smoothed with linear interpolation at 60 fps. The resulting vector drives:
 
-- **Hue shift** — subtle color temperature change.
-- **Parallax offset** — chromatic aberration direction.
-- **Gradient angle** — iridescent gradient rotation.
-- **Light-band position** — specular highlight sweep.
+- **Conic gradient rotation** — rainbow color zone shifting (foil).
+- **Specular highlight position** — bright spot follows tilt (foil).
+- **Hue shift** — subtle color temperature change (beam).
+- **Chromatic aberration direction** — RGB split follows tilt (beam).
+- **Light-band position** — specular highlight sweep (beam).
 
 ### Animations
 
@@ -164,16 +202,17 @@ Opens the interactive component playground at `http://localhost:6006` with live 
 
 Available stories:
 
-| Story | Description |
-|---|---|
-| **Default** | Basic cyan hologram text with interactive controls |
-| **WithBackgroundImage** | Demonstrates holographic image conversion |
-| **ColorPresets** | Side-by-side comparison of all 5 presets |
-| **LargeDisplay** | Cinematic large heading |
-| **CustomContent** | Terminal-style status readout |
-| **GoldWithBackground** | Gold preset with background image |
-| **Static** | All animation/interaction disabled |
-| **Rainbow** | Full-spectrum iridescent mode |
+| Story | Variant | Description |
+|---|---|---|
+| **FoilDefault** | foil | Rainbow holographic foil with dark text |
+| **FoilWithImage** | foil | Background image blended onto the foil |
+| **FoilColorPresets** | foil | Side-by-side comparison of all 5 presets |
+| **FoilGold** | foil | Gold metallic base preset |
+| **BeamDefault** | beam | Classic cyan sci-fi hologram |
+| **BeamWithImage** | beam | Background image with holographic color conversion |
+| **BeamLargeDisplay** | beam | Cinematic large heading |
+| **BeamTerminal** | beam | Green terminal-style status readout |
+| **BeamRainbow** | beam | Full-spectrum iridescent mode |
 
 ---
 
@@ -202,7 +241,7 @@ npm run build
 - Safari 15+
 - Mobile Safari / Chrome (gyroscope support)
 
-The component gracefully degrades: if the gyroscope API is unavailable it falls back to mouse tracking; if `mix-blend-mode` is unsupported the gradient overlay renders without blending.
+The component gracefully degrades: if the gyroscope API is unavailable it falls back to mouse tracking; each foil layer is a separate DOM element for maximum browser compatibility.
 
 ---
 

@@ -1,52 +1,63 @@
 import { useId, type CSSProperties } from 'react';
 import { useHologramEffect } from './hooks';
-import { resolveColorPalette } from './utils';
+import { resolveBeamPalette, resolveFoilPalette } from './utils';
 import { DEFAULTS } from './constants';
 import type { HologramProps } from './types';
 import styles from './Hologram.module.css';
 
 /**
  * `<Hologram>` renders its children (text, images, any React node) with a
- * realistic holographic visual effect.
+ * holographic visual effect.
  *
- * The effect is composed of multiple GPU-accelerated CSS layers:
+ * Two visual variants are available:
  *
- * 1. **Background image** — automatically converted to a holographic color
- *    palette via CSS filters (`grayscale → sepia → hue-rotate → saturate`).
- * 2. **Iridescent gradient overlay** — blended on top of the background with
- *    `mix-blend-mode: screen` for a light-diffraction look.
- * 3. **Animated scanlines** — horizontal interference lines that scroll
- *    continuously.
- * 4. **Specular light band** — a bright highlight that moves with the
- *    device tilt / mouse position.
- * 5. **Film grain noise** — a subtle static-noise texture for realism.
- * 6. **Chromatic aberration** — RGB channel splitting on text that follows
- *    the orientation input.
- * 7. **Glow** — soft colored bloom on text and container edges.
- * 8. **Flicker** — random subtle brightness variations.
- * 9. **Glitch** — occasional horizontal displacement + hue burst.
+ * ### `variant="foil"` (default) — Realistic holographic material
  *
- * All orientation-driven effects read from the device gyroscope
- * (`DeviceOrientationEvent`) and fall back to mouse-position tracking on
- * desktop.
+ * Simulates real-world holographic foil / security-label material with:
+ * - **Conic rainbow diffraction** — full-spectrum color wheel that rotates
+ *   with device tilt / mouse position.
+ * - **Secondary rainbow band** — an offset linear gradient that creates
+ *   complex spatial color variation (different areas show different hues).
+ * - **Chrome metallic base** — multi-stop silver/gold gradient beneath the
+ *   rainbow for realistic reflectivity.
+ * - **Micro-line diffraction grating** — very fine repeating lines that
+ *   reproduce the texture of real holographic foil.
+ * - **Specular highlight** — a bright radial hot-spot that follows
+ *   the device orientation.
+ * - **Fresnel edge brightening** — perimeter glow simulating light catch.
+ *
+ * Background images are blended with `mix-blend-mode: multiply`, so dark
+ * areas of the image appear as "ink" printed on the foil, while light areas
+ * reveal the rainbow surface underneath — exactly like real holographic
+ * stickers.
+ *
+ * ### `variant="beam"` — Sci-fi projected hologram
+ *
+ * A glowing, translucent aesthetic inspired by sci-fi holograms:
+ * - Chromatic aberration, scanlines, edge bloom, flicker, and glitch.
+ * - Background images are re-graded to a monochromatic holographic palette.
  *
  * @example
  * ```tsx
- * <Hologram>HELLO WORLD</Hologram>
+ * // Realistic holographic foil (default)
+ * <Hologram>HOLOGRAM TEXT</Hologram>
  *
- * <Hologram
- *   backgroundImage="/hero.jpg"
- *   color="magenta"
- *   intensity={0.9}
- * >
- *   <h1>Cyberpunk Title</h1>
+ * // Foil with a background image printed on it
+ * <Hologram backgroundImage="/logo.png" color="gold">
+ *   <h1>CERTIFIED</h1>
+ * </Hologram>
+ *
+ * // Sci-fi projected hologram
+ * <Hologram variant="beam" color="cyan">
+ *   <h1>SYSTEM ONLINE</h1>
  * </Hologram>
  * ```
  */
 export function Hologram({
   children,
+  variant = DEFAULTS.variant,
   backgroundImage,
-  color = DEFAULTS.color,
+  color,
   intensity = DEFAULTS.intensity,
   scanlineSpeed = DEFAULTS.scanlineSpeed,
   flickerIntensity = DEFAULTS.flickerIntensity,
@@ -58,7 +69,9 @@ export function Hologram({
   style,
 }: HologramProps) {
   const id = useId();
-  const palette = resolveColorPalette(color);
+
+  // Resolve default color per variant
+  const resolvedColor = color ?? (variant === 'foil' ? 'rainbow' : 'cyan');
 
   const { params, isGlitching } = useHologramEffect({
     intensity,
@@ -68,7 +81,167 @@ export function Hologram({
     glitchInterval,
   });
 
-  // ---- CSS custom properties ----------------------------------------
+  if (variant === 'foil') {
+    return (
+      <FoilHologram
+        id={id}
+        resolvedColor={resolvedColor}
+        params={params}
+        isGlitching={isGlitching}
+        scanlineSpeed={scanlineSpeed}
+        backgroundImage={backgroundImage}
+        className={className}
+        style={style}
+      >
+        {children}
+      </FoilHologram>
+    );
+  }
+
+  return (
+    <BeamHologram
+      id={id}
+      resolvedColor={resolvedColor}
+      params={params}
+      isGlitching={isGlitching}
+      scanlineSpeed={scanlineSpeed}
+      chromaticAberration={chromaticAberration}
+      backgroundImage={backgroundImage}
+      className={className}
+      style={style}
+    >
+      {children}
+    </BeamHologram>
+  );
+}
+
+/* ====================================================================
+   FOIL variant — realistic holographic material
+   ==================================================================== */
+
+interface FoilProps {
+  id: string;
+  resolvedColor: string;
+  params: ReturnType<typeof useHologramEffect>['params'];
+  isGlitching: boolean;
+  scanlineSpeed: number;
+  backgroundImage?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: React.ReactNode;
+}
+
+function FoilHologram({
+  id,
+  resolvedColor,
+  params,
+  isGlitching,
+  scanlineSpeed,
+  backgroundImage,
+  className,
+  style,
+  children,
+}: FoilProps) {
+  const foil = resolveFoilPalette(resolvedColor);
+
+  const gratingAngle = `${params.secondaryAngle * 0.5 + 30}deg`;
+  const baseAngle = `${params.gradientAngle + 90}deg`;
+
+  const cssVars: CSSProperties & Record<string, string> = {
+    '--holo-conic-angle': `${params.conicAngle}deg`,
+    '--holo-secondary-angle': `${params.secondaryAngle}deg`,
+    '--holo-base-angle': baseAngle,
+    '--holo-grating-angle': gratingAngle,
+    '--holo-light-x': `${params.lightX}%`,
+    '--holo-light-y': `${params.lightY}%`,
+    '--holo-flicker': `${params.flickerOpacity}`,
+    '--holo-scanline-speed': `${scanlineSpeed}s`,
+    '--holo-foil-hue': `${foil.hueOffset}deg`,
+    '--holo-foil-sat': `${foil.saturation}`,
+    '--holo-metal-dark': foil.metalDark,
+    '--holo-metal-mid': foil.metalMid,
+    '--holo-metal-light': foil.metalLight,
+  };
+
+  const rootClasses = [
+    styles.root,
+    isGlitching && styles.glitchActive,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const foilLayer = `${styles.foilLayer}`;
+
+  return (
+    <div
+      className={rootClasses}
+      style={{ ...cssVars, ...style }}
+      role="presentation"
+      data-hologram-id={id}
+    >
+      {/* Holographic foil surface — separate layers for robustness */}
+      <div className={styles.foilSurface} aria-hidden>
+        <div className={`${foilLayer} ${styles.foilMetalBase}`} />
+        <div className={`${foilLayer} ${styles.foilRainbow}`} />
+        <div className={`${foilLayer} ${styles.foilSecondary}`} />
+        <div className={`${foilLayer} ${styles.foilGrating}`} />
+        <div className={`${foilLayer} ${styles.foilSpecular}`} />
+        <div className={`${foilLayer} ${styles.foilFresnel}`} />
+      </div>
+
+      {/* Background image blended onto the foil via multiply */}
+      {backgroundImage && (
+        <div className={styles.foilBackgroundImage} aria-hidden>
+          <img src={backgroundImage} alt="" draggable={false} />
+        </div>
+      )}
+
+      {/* Scanlines (subtle) */}
+      <div
+        className={`${styles.scanlines} ${styles.foilScanlines}`}
+        aria-hidden
+      />
+
+      {/* Film grain noise */}
+      <div className={styles.noise} aria-hidden />
+
+      {/* Content (dark print on shiny foil) */}
+      <div className={styles.foilContent}>{children}</div>
+    </div>
+  );
+}
+
+/* ====================================================================
+   BEAM variant — sci-fi projected hologram
+   ==================================================================== */
+
+interface BeamProps {
+  id: string;
+  resolvedColor: string;
+  params: ReturnType<typeof useHologramEffect>['params'];
+  isGlitching: boolean;
+  scanlineSpeed: number;
+  chromaticAberration: number;
+  backgroundImage?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: React.ReactNode;
+}
+
+function BeamHologram({
+  id,
+  resolvedColor,
+  params,
+  isGlitching,
+  scanlineSpeed,
+  chromaticAberration,
+  backgroundImage,
+  className,
+  style,
+  children,
+}: BeamProps) {
+  const palette = resolveBeamPalette(resolvedColor);
 
   const cssVars: CSSProperties & Record<string, string> = {
     '--holo-primary': palette.primary,
@@ -84,13 +257,11 @@ export function Hologram({
     '--holo-scanline-speed': `${scanlineSpeed}s`,
   };
 
-  // ---- Class composition --------------------------------------------
-
   const rootClasses = [
     styles.root,
-    styles.edgeGlow,
+    styles.beamEdgeGlow,
     isGlitching && styles.glitchActive,
-    color === 'rainbow' && styles.rainbow,
+    resolvedColor === 'rainbow' && styles.beamRainbow,
     className,
   ]
     .filter(Boolean)
@@ -101,20 +272,19 @@ export function Hologram({
       className={rootClasses}
       style={{ ...cssVars, ...style }}
       role="presentation"
-      aria-hidden={false}
       data-hologram-id={id}
     >
       {/* Background image (holographic color conversion) */}
       {backgroundImage && (
-        <div className={styles.backgroundLayer}>
+        <div className={styles.beamBackgroundLayer}>
           <img
-            className={styles.backgroundImage}
+            className={styles.beamBackgroundImage}
             src={backgroundImage}
             alt=""
             aria-hidden
             draggable={false}
           />
-          <div className={styles.backgroundOverlay} />
+          <div className={styles.beamBackgroundOverlay} />
         </div>
       )}
 
@@ -122,13 +292,13 @@ export function Hologram({
       <div className={styles.scanlines} aria-hidden />
 
       {/* Specular light band */}
-      <div className={styles.lightBand} aria-hidden />
+      <div className={styles.beamLightBand} aria-hidden />
 
       {/* Film grain noise */}
       <div className={styles.noise} aria-hidden />
 
       {/* Content */}
-      <div className={styles.content}>{children}</div>
+      <div className={styles.beamContent}>{children}</div>
     </div>
   );
 }

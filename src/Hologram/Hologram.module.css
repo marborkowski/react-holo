@@ -1,11 +1,16 @@
 /* ================================================================
    Hologram Component Styles
    ================================================================
+   Two visual variants:
+     - FOIL  — realistic holographic sticker / security label
+     - BEAM  — sci-fi projected hologram (glowing text on dark)
+
    All dynamic values are driven by CSS custom properties set from JS.
-   This keeps the styles declarative while allowing fine-grained control.
    ================================================================ */
 
-/* ---- Root container ------------------------------------------------ */
+/* ================================================================
+   SHARED
+   ================================================================ */
 
 .root {
   position: relative;
@@ -15,20 +20,230 @@
   transition: opacity 0.05s linear;
 }
 
+/* ---- Scanlines ----------------------------------------------------- */
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  background-size: 100% 4px;
+  animation: scanlineScroll var(--holo-scanline-speed, 8s) linear infinite;
+}
+
+.foilScanlines {
+  opacity: 0.3;
+}
+
+@keyframes scanlineScroll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 100%; }
+}
+
+/* ---- Noise texture ------------------------------------------------- */
+
+.noise {
+  position: absolute;
+  inset: -50%;
+  z-index: 11;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ---- Glitch animation ---------------------------------------------- */
+
+.glitchActive {
+  animation: hologramGlitch 0.2s steps(3) forwards;
+}
+
+@keyframes hologramGlitch {
+  0%, 100% { transform: none; filter: none; }
+  20% { transform: translateX(-3px) skewX(-0.5deg); filter: hue-rotate(90deg) saturate(1.5); }
+  40% { transform: translateX(4px) skewX(0.5deg); filter: hue-rotate(-60deg) saturate(1.3); }
+  60% { transform: translateX(-2px); filter: hue-rotate(45deg); }
+  80% { transform: translateX(1px) skewX(-0.3deg); filter: none; }
+}
+
+
+/* ================================================================
+   FOIL VARIANT — realistic holographic material
+   ================================================================
+   Each visual layer is a separate DOM element for maximum browser
+   compatibility (complex multi-background shorthands with
+   conic-gradient + calc + var can silently fail in some engines).
+
+   Layer stack (z-index, bottom → top):
+     0  Chrome metallic base gradient
+     1  Primary conic rainbow diffraction
+     2  Secondary linear rainbow (spatial variation)
+     3  Micro-line diffraction grating texture
+     4  Specular highlight (follows orientation)
+     5  Fresnel edge brightening
+     6  (optional) Background image via multiply
+     …  Scanlines, noise, content
+   ================================================================ */
+
+/* Shared positioning for all foil layers */
+.foilLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 0 — Chrome metallic base */
+.foilMetalBase {
+  z-index: 0;
+  background: linear-gradient(
+    var(--holo-base-angle, 225deg),
+    var(--holo-metal-dark, #666) 0%,
+    var(--holo-metal-light, #ddd) 18%,
+    var(--holo-metal-mid, #999) 33%,
+    var(--holo-metal-light, #ddd) 50%,
+    var(--holo-metal-mid, #999) 66%,
+    var(--holo-metal-light, #ddd) 82%,
+    var(--holo-metal-dark, #666) 100%
+  );
+}
+
+/* 1 — Primary rainbow diffraction (conic) */
+.foilRainbow {
+  z-index: 1;
+  background: conic-gradient(
+    from var(--holo-conic-angle, 0deg) at 50% 50%,
+    hsl(0, 90%, 62%),
+    hsl(30, 95%, 58%),
+    hsl(60, 95%, 55%),
+    hsl(90, 85%, 48%),
+    hsl(120, 85%, 45%),
+    hsl(150, 90%, 48%),
+    hsl(180, 90%, 52%),
+    hsl(210, 90%, 56%),
+    hsl(240, 85%, 58%),
+    hsl(270, 85%, 56%),
+    hsl(300, 90%, 58%),
+    hsl(330, 90%, 60%),
+    hsl(360, 90%, 62%)
+  );
+  mix-blend-mode: color;
+}
+
+/* 2 — Secondary rainbow band (linear, different angle → spatial complexity) */
+.foilSecondary {
+  z-index: 2;
+  background: linear-gradient(
+    var(--holo-secondary-angle, 60deg),
+    hsla(300, 85%, 58%, 0.4),
+    hsla(240, 85%, 55%, 0.35),
+    hsla(180, 90%, 52%, 0.4),
+    hsla(120, 85%, 48%, 0.35),
+    hsla(60, 90%, 55%, 0.4),
+    hsla(0, 85%, 58%, 0.35),
+    hsla(300, 85%, 58%, 0.4)
+  );
+  mix-blend-mode: overlay;
+}
+
+/* 3 — Micro-line diffraction grating */
+.foilGrating {
+  z-index: 3;
+  background: repeating-linear-gradient(
+    var(--holo-grating-angle, 60deg),
+    transparent 0px,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 2px
+  );
+}
+
+/* 4 — Specular highlight (bright spot, follows device tilt) */
+.foilSpecular {
+  z-index: 4;
+  background: radial-gradient(
+    ellipse 50% 40% at var(--holo-light-x, 50%) var(--holo-light-y, 50%),
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 65%
+  );
+}
+
+/* 5 — Fresnel edge glow — brighter at the perimeter */
+.foilFresnel {
+  z-index: 5;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+}
+
+/* Color/saturation filter applied to the parent that wraps all foil layers */
+.foilSurface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  filter:
+    contrast(1.15)
+    brightness(1.05)
+    saturate(var(--holo-foil-sat, 1.4))
+    hue-rotate(var(--holo-foil-hue, 0deg));
+}
+
+/* ---- Foil background image (printed ON the foil) ------------------- */
+
+.foilBackgroundImage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.foilBackgroundImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Boost contrast so dark areas "print" crisply onto the foil,
+     light areas become transparent via multiply blend. */
+  filter: contrast(1.4) brightness(1.1);
+  mix-blend-mode: multiply;
+}
+
+/* ---- Foil content (dark text / graphics on shiny surface) ---------- */
+
+.foilContent {
+  position: relative;
+  z-index: 12;
+  color: rgba(0, 0, 0, 0.82);
+  /* Subtle emboss to simulate physical ink impression */
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25),
+    0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+
+/* ================================================================
+   BEAM VARIANT — sci-fi projected hologram
+   ================================================================ */
+
 /* ---- Background image layer --------------------------------------- */
 
-.backgroundLayer {
+.beamBackgroundLayer {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
 }
 
-.backgroundImage {
+.beamBackgroundImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Desaturate → warm tint → shift hue to target palette → re-saturate */
   filter:
     grayscale(0.8)
     brightness(1.3)
@@ -39,8 +254,7 @@
   opacity: 0.55;
 }
 
-/* Holographic gradient overlay blended onto the background image */
-.backgroundOverlay {
+.beamBackgroundOverlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -55,32 +269,9 @@
   opacity: 0.6;
 }
 
-/* ---- Scanlines ----------------------------------------------------- */
+/* ---- Light band (beam variant, moving specular highlight) --------- */
 
-.scanlines {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.06) 2px,
-    rgba(0, 0, 0, 0.06) 4px
-  );
-  background-size: 100% 4px;
-  animation: scanlineScroll var(--holo-scanline-speed, 8s) linear infinite;
-}
-
-@keyframes scanlineScroll {
-  from { background-position: 0 0; }
-  to   { background-position: 0 100%; }
-}
-
-/* ---- Light band (moving specular highlight) ----------------------- */
-
-.lightBand {
+.beamLightBand {
   position: absolute;
   inset: 0;
   z-index: 3;
@@ -97,24 +288,11 @@
   );
 }
 
-/* ---- Noise texture ------------------------------------------------- */
+/* ---- Beam content (glowing text with chromatic aberration) --------- */
 
-.noise {
-  position: absolute;
-  inset: -50%;
-  z-index: 4;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
-}
-
-/* ---- Content layer ------------------------------------------------- */
-
-.content {
+.beamContent {
   position: relative;
-  z-index: 5;
-  /* Chromatic aberration + glow combined text-shadow */
+  z-index: 12;
   text-shadow:
     /* Red channel offset */
     calc(var(--holo-ca-x, 0) * 1px)
@@ -132,47 +310,41 @@
   filter: hue-rotate(var(--holo-hue-shift, 0deg));
 }
 
-/* ---- Edge glow (box-shadow on root) -------------------------------- */
+/* ---- Edge glow (beam variant) -------------------------------------- */
 
-.edgeGlow {
+.beamEdgeGlow {
   box-shadow:
     inset 0 0 30px color-mix(in srgb, var(--holo-primary) 15%, transparent),
     0 0 15px color-mix(in srgb, var(--holo-primary) 20%, transparent),
     0 0 30px color-mix(in srgb, var(--holo-secondary) 10%, transparent);
 }
 
-/* ---- Glitch animation ---------------------------------------------- */
+/* ---- Rainbow text (beam variant, rainbow preset) ------------------- */
 
-.glitchActive {
-  animation: hologramGlitch 0.2s steps(3) forwards;
+.beamRainbow .beamContent {
+  background: linear-gradient(
+    90deg,
+    #00f0ff,
+    #00ff80,
+    #ffff00,
+    #ff00ff,
+    #00f0ff
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbowText 3s linear infinite;
 }
 
-@keyframes hologramGlitch {
-  0%, 100% {
-    transform: none;
-    filter: none;
-  }
-  20% {
-    transform: translateX(-3px) skewX(-0.5deg);
-    filter: hue-rotate(90deg) saturate(1.5);
-  }
-  40% {
-    transform: translateX(4px) skewX(0.5deg);
-    filter: hue-rotate(-60deg) saturate(1.3);
-  }
-  60% {
-    transform: translateX(-2px);
-    filter: hue-rotate(45deg);
-  }
-  80% {
-    transform: translateX(1px) skewX(-0.3deg);
-    filter: none;
-  }
+@keyframes rainbowText {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
 }
 
-/* ---- Rainbow variant: animated gradient hue ----------------------- */
+/* ---- Rainbow overlay (beam variant) -------------------------------- */
 
-.rainbow .backgroundOverlay {
+.beamRainbow .beamBackgroundOverlay {
   background: linear-gradient(
     var(--holo-gradient-angle, 135deg),
     #ff0000 0%,
@@ -195,28 +367,10 @@
   to   { background-position: 200% 200%; }
 }
 
-.rainbow .content {
-  background: linear-gradient(
-    90deg,
-    #00f0ff,
-    #00ff80,
-    #ffff00,
-    #ff00ff,
-    #00f0ff
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: rainbowText 3s linear infinite;
-}
 
-@keyframes rainbowText {
-  from { background-position: 0% 50%; }
-  to   { background-position: 200% 50%; }
-}
-
-/* ---- Reduced motion ------------------------------------------------ */
+/* ================================================================
+   REDUCED MOTION
+   ================================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   .scanlines {
@@ -229,11 +383,11 @@
     filter: none;
   }
 
-  .rainbow .backgroundOverlay {
+  .beamRainbow .beamBackgroundOverlay {
     animation: none;
   }
 
-  .rainbow .content {
+  .beamRainbow .beamContent {
     animation: none;
   }
 }

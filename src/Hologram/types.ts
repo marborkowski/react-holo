@@ -4,13 +4,27 @@ import type { CSSProperties, ReactNode } from 'react';
  * Available hologram color preset names.
  *
  * Each preset defines a distinct holographic color palette:
- * - `'cyan'` — Classic sci-fi cyan/teal hologram
- * - `'green'` — Matrix-style green hologram
- * - `'magenta'` — Vibrant magenta/pink hologram
- * - `'gold'` — Warm golden hologram
- * - `'rainbow'` — Multi-color iridescent hologram
+ * - `'cyan'` — Cool-toned silver-blue holographic foil
+ * - `'green'` — Green-biased holographic foil
+ * - `'magenta'` — Pink/purple-biased holographic foil
+ * - `'gold'` — Warm gold metallic holographic foil
+ * - `'rainbow'` — Neutral silver foil with full-spectrum rainbow (default for foil)
  */
 export type HologramColorPreset = 'cyan' | 'green' | 'magenta' | 'gold' | 'rainbow';
+
+/**
+ * Visual variant of the hologram component.
+ *
+ * - `'foil'` — Realistic holographic foil/sticker material with rainbow
+ *   diffraction, metallic sheen, and micro-line grating. Content appears
+ *   dark (printed) on top of the shiny surface. Matches real-world
+ *   holographic labels and security stickers.
+ *
+ * - `'beam'` — Sci-fi projected-hologram aesthetic with glowing text,
+ *   chromatic aberration, scanlines, and edge bloom on a dark background.
+ *   Think Star Wars holograms or cyberpunk UI panels.
+ */
+export type HologramVariant = 'foil' | 'beam';
 
 /**
  * Device orientation data normalized to the [-1, 1] range on both axes.
@@ -40,6 +54,14 @@ export interface HologramEffectParams {
   lightBandPosition: number;
   /** Flicker opacity multiplier (0–1) */
   flickerOpacity: number;
+  /** Start angle of the primary conic rainbow gradient (0–360 deg, foil variant) */
+  conicAngle: number;
+  /** Angle of the secondary linear rainbow gradient (foil variant) */
+  secondaryAngle: number;
+  /** X position of the specular highlight (0–100 %, foil variant) */
+  lightX: number;
+  /** Y position of the specular highlight (0–100 %, foil variant) */
+  lightY: number;
 }
 
 /**
@@ -53,9 +75,29 @@ export interface HologramProps {
   children: ReactNode;
 
   /**
+   * Visual variant.
+   *
+   * - `'foil'` — Realistic holographic foil material (rainbow diffraction,
+   *   metallic sheen). Content appears as dark print on the shiny surface.
+   *   Background images are blended via `multiply`, so dark areas of the
+   *   image "print" onto the foil while light areas reveal the rainbow.
+   *
+   * - `'beam'` — Sci-fi projected hologram (glowing text, chromatic
+   *   aberration, scanlines). Background images are tinted to a
+   *   single-hue holographic palette.
+   *
+   * @default 'foil'
+   */
+  variant?: HologramVariant;
+
+  /**
    * Optional background image URL.
-   * The image is automatically converted to a holographic color palette
-   * using CSS filters and a tinted gradient overlay.
+   *
+   * - **foil variant** — image is blended with `mix-blend-mode: multiply`
+   *   on top of the holographic foil surface. Dark areas appear as "ink",
+   *   light areas reveal the rainbow foil beneath.
+   * - **beam variant** — image is converted to a monochromatic holographic
+   *   palette via CSS filters.
    */
   backgroundImage?: string;
 
@@ -64,10 +106,14 @@ export interface HologramProps {
    *
    * Presets: `'cyan'` | `'green'` | `'magenta'` | `'gold'` | `'rainbow'`
    *
+   * - In **foil** mode the preset biases the rainbow spectrum and metallic
+   *   base tone (e.g. `'gold'` gives a warm brass base).
+   * - In **beam** mode the preset sets the glow / tint color.
+   *
    * When a custom CSS color (e.g. `'#ff4500'`) is provided the component
    * derives the hue automatically.
    *
-   * @default 'cyan'
+   * @default 'rainbow' (foil) / 'cyan' (beam)
    */
   color?: HologramColorPreset | (string & {});
 
@@ -98,6 +144,7 @@ export interface HologramProps {
   /**
    * Magnitude of the chromatic-aberration offset in pixels (0–5).
    * The direction follows the device orientation / mouse position.
+   * Primarily visible in the `beam` variant.
    *
    * @default 2
    */

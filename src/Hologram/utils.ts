@@ -1,31 +1,47 @@
-import { COLOR_PRESETS } from './constants';
+import { BEAM_PRESETS, FOIL_PRESETS } from './constants';
 import type { HologramColorPreset } from './types';
 
 /**
- * Resolve a color prop (preset name *or* custom CSS color) into the
- * three-color palette and hue-rotate value used by the component.
- *
- * @param color - A preset name (`'cyan'`, `'green'`, …) or any CSS color string.
- * @returns An object with `primary`, `secondary`, `tertiary` CSS color values
- *          and a `hueRotate` number (degrees) for the background-image filter.
+ * Resolve a color prop into the beam-variant palette (glow colors + filter hue).
  */
-export function resolveColorPalette(color: HologramColorPreset | string): {
+export function resolveBeamPalette(color: HologramColorPreset | string): {
   primary: string;
   secondary: string;
   tertiary: string;
   hueRotate: number;
 } {
-  const preset = COLOR_PRESETS[color];
+  const preset = BEAM_PRESETS[color];
   if (preset) return preset;
 
-  // Custom color: use it as the primary, derive secondary/tertiary,
-  // and compute hue-rotate from the color's hue.
   const hue = parseHue(color);
   return {
     primary: color,
     secondary: color,
     tertiary: color,
     hueRotate: hue === null ? 160 : hueToSepiaRotation(hue),
+  };
+}
+
+/**
+ * Resolve a color prop into the foil-variant palette (metallic base + hue bias).
+ */
+export function resolveFoilPalette(color: HologramColorPreset | string): {
+  hueOffset: number;
+  metalDark: string;
+  metalMid: string;
+  metalLight: string;
+  saturation: number;
+} {
+  const preset = FOIL_PRESETS[color];
+  if (preset) return preset;
+
+  const hue = parseHue(color);
+  return {
+    hueOffset: hue !== null ? hue - 180 : 0,
+    metalDark: '#666',
+    metalMid: '#999',
+    metalLight: '#ddd',
+    saturation: 1.4,
   };
 }
 

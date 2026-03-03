@@ -31,7 +31,8 @@ interface UseHologramEffectReturn {
  * animations into concrete hologram visual-effect parameters.
  *
  * It composes {@link useDeviceOrientation} internally and layers flicker
- * and glitch logic on top.
+ * and glitch logic on top. The returned params drive CSS custom properties
+ * for both the `foil` and `beam` variants.
  *
  * @param options - Fine-tuning knobs for the effect.
  * @returns Effect parameters, glitch state, and the active orientation source.
@@ -39,7 +40,7 @@ interface UseHologramEffectReturn {
  * @example
  * ```tsx
  * const { params, isGlitching } = useHologramEffect({ intensity: 0.8 });
- * // params.hueShift, params.offsetX, etc. → CSS custom properties
+ * // params.conicAngle, params.lightX, etc. → CSS custom properties
  * ```
  */
 export function useHologramEffect(
@@ -116,12 +117,19 @@ export function useHologramEffect(
 
   const params = useMemo<HologramEffectParams>(
     () => ({
+      // Beam-variant params
       hueShift: orientation.x * 30 * intensity,
       offsetX: orientation.x * 10 * intensity,
       offsetY: orientation.y * 10 * intensity,
       gradientAngle: 135 + orientation.x * 45,
       lightBandPosition: 50 + orientation.x * 30,
       flickerOpacity,
+
+      // Foil-variant params
+      conicAngle: orientation.x * 180 * intensity,
+      secondaryAngle: 60 + orientation.y * 120 * intensity,
+      lightX: 50 + orientation.x * 40 * intensity,
+      lightY: 50 + orientation.y * 40 * intensity,
     }),
     [orientation, intensity, flickerOpacity],
   );
