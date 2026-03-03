@@ -2,6 +2,8 @@
 
 A React component that renders text and images with a **realistic hologram effect**, driven by device gyroscope or mouse input.
 
+![Default hologram](docs/screenshots/default.png)
+
 ---
 
 ## Features
@@ -57,6 +59,8 @@ function App() {
 
 The background image is automatically converted to the holographic color palette. The `color` prop controls which hue family is used.
 
+![Hologram with background image](docs/screenshots/with-background-image.png)
+
 ---
 
 ## Props
@@ -89,6 +93,34 @@ The background image is automatically converted to the holographic color palette
 | `rainbow` | multi | Full-spectrum iridescent cycle |
 
 You can also pass any valid CSS color (e.g. `'#ff4500'`, `'hotpink'`). The component will derive the hue automatically for the image filter and use the raw color for glows and text.
+
+![All color presets](docs/screenshots/color-presets.png)
+
+---
+
+## Screenshots
+
+### Large display
+
+Cinematic heading — the kind you'd see floating in a sci-fi control room.
+
+![Large display](docs/screenshots/large-display.png)
+
+### Custom content (green preset)
+
+The hologram container accepts arbitrary React content, not just text.
+
+![Custom content](docs/screenshots/custom-content.png)
+
+### Gold preset with background image
+
+![Gold with background](docs/screenshots/gold-with-background.png)
+
+### Rainbow (iridescent) mode
+
+Full-spectrum iridescent preset — cycles through the entire color wheel.
+
+![Rainbow mode](docs/screenshots/rainbow.png)
 
 ---
 
