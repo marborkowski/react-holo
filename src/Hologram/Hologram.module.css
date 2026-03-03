@@ -1,0 +1,239 @@
+/* ================================================================
+   Hologram Component Styles
+   ================================================================
+   All dynamic values are driven by CSS custom properties set from JS.
+   This keeps the styles declarative while allowing fine-grained control.
+   ================================================================ */
+
+/* ---- Root container ------------------------------------------------ */
+
+.root {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  opacity: var(--holo-flicker, 1);
+  transition: opacity 0.05s linear;
+}
+
+/* ---- Background image layer --------------------------------------- */
+
+.backgroundLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.backgroundImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Desaturate → warm tint → shift hue to target palette → re-saturate */
+  filter:
+    grayscale(0.8)
+    brightness(1.3)
+    contrast(1.1)
+    sepia(1)
+    hue-rotate(var(--holo-bg-hue, 160deg))
+    saturate(2);
+  opacity: 0.55;
+}
+
+/* Holographic gradient overlay blended onto the background image */
+.backgroundOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    var(--holo-gradient-angle, 135deg),
+    var(--holo-primary) 0%,
+    transparent 40%,
+    var(--holo-secondary) 60%,
+    transparent 80%,
+    var(--holo-tertiary) 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+/* ---- Scanlines ----------------------------------------------------- */
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  background-size: 100% 4px;
+  animation: scanlineScroll var(--holo-scanline-speed, 8s) linear infinite;
+}
+
+@keyframes scanlineScroll {
+  from { background-position: 0 0; }
+  to   { background-position: 0 100%; }
+}
+
+/* ---- Light band (moving specular highlight) ----------------------- */
+
+.lightBand {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    transparent calc(var(--holo-light-pos, 50%) - 12%),
+    rgba(255, 255, 255, 0.08) calc(var(--holo-light-pos, 50%) - 4%),
+    rgba(255, 255, 255, 0.14) var(--holo-light-pos, 50%),
+    rgba(255, 255, 255, 0.08) calc(var(--holo-light-pos, 50%) + 4%),
+    transparent calc(var(--holo-light-pos, 50%) + 12%),
+    transparent
+  );
+}
+
+/* ---- Noise texture ------------------------------------------------- */
+
+.noise {
+  position: absolute;
+  inset: -50%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ---- Content layer ------------------------------------------------- */
+
+.content {
+  position: relative;
+  z-index: 5;
+  /* Chromatic aberration + glow combined text-shadow */
+  text-shadow:
+    /* Red channel offset */
+    calc(var(--holo-ca-x, 0) * 1px)
+    calc(var(--holo-ca-y, 0) * 0.5px)
+    0 rgba(255, 0, 0, 0.35),
+    /* Cyan channel offset (opposite direction) */
+    calc(var(--holo-ca-x, 0) * -1px)
+    calc(var(--holo-ca-y, 0) * -0.5px)
+    0 rgba(0, 255, 255, 0.35),
+    /* Primary glow */
+    0 0 8px var(--holo-primary),
+    0 0 20px color-mix(in srgb, var(--holo-primary) 50%, transparent),
+    0 0 40px color-mix(in srgb, var(--holo-secondary) 30%, transparent);
+  color: var(--holo-primary);
+  filter: hue-rotate(var(--holo-hue-shift, 0deg));
+}
+
+/* ---- Edge glow (box-shadow on root) -------------------------------- */
+
+.edgeGlow {
+  box-shadow:
+    inset 0 0 30px color-mix(in srgb, var(--holo-primary) 15%, transparent),
+    0 0 15px color-mix(in srgb, var(--holo-primary) 20%, transparent),
+    0 0 30px color-mix(in srgb, var(--holo-secondary) 10%, transparent);
+}
+
+/* ---- Glitch animation ---------------------------------------------- */
+
+.glitchActive {
+  animation: hologramGlitch 0.2s steps(3) forwards;
+}
+
+@keyframes hologramGlitch {
+  0%, 100% {
+    transform: none;
+    filter: none;
+  }
+  20% {
+    transform: translateX(-3px) skewX(-0.5deg);
+    filter: hue-rotate(90deg) saturate(1.5);
+  }
+  40% {
+    transform: translateX(4px) skewX(0.5deg);
+    filter: hue-rotate(-60deg) saturate(1.3);
+  }
+  60% {
+    transform: translateX(-2px);
+    filter: hue-rotate(45deg);
+  }
+  80% {
+    transform: translateX(1px) skewX(-0.3deg);
+    filter: none;
+  }
+}
+
+/* ---- Rainbow variant: animated gradient hue ----------------------- */
+
+.rainbow .backgroundOverlay {
+  background: linear-gradient(
+    var(--holo-gradient-angle, 135deg),
+    #ff0000 0%,
+    #ff8800 14%,
+    #ffff00 28%,
+    #00ff00 42%,
+    #00ffff 57%,
+    #0066ff 71%,
+    #ff00ff 85%,
+    #ff0000 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.4;
+  animation: rainbowShift 4s linear infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes rainbowShift {
+  from { background-position: 0% 0%; }
+  to   { background-position: 200% 200%; }
+}
+
+.rainbow .content {
+  background: linear-gradient(
+    90deg,
+    #00f0ff,
+    #00ff80,
+    #ffff00,
+    #ff00ff,
+    #00f0ff
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbowText 3s linear infinite;
+}
+
+@keyframes rainbowText {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
+}
+
+/* ---- Reduced motion ------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .scanlines {
+    animation: none;
+  }
+
+  .glitchActive {
+    animation: none;
+    transform: none;
+    filter: none;
+  }
+
+  .rainbow .backgroundOverlay {
+    animation: none;
+  }
+
+  .rainbow .content {
+    animation: none;
+  }
+}
