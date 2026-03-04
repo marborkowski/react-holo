@@ -100,8 +100,6 @@ Glowing text with chromatic aberration, scanlines, and edge bloom:
 | `scanlineSpeed` | `number` | `8` | Scanline scroll cycle duration in seconds. |
 | `flickerIntensity` | `number` | `0.3` | Random flicker strength (0–1). |
 | `chromaticAberration` | `number` | `2` | RGB channel-split offset in pixels (0–5). Primarily visible in beam variant. |
-| `glitch` | `boolean` | `true` | Enable/disable random glitch bursts. |
-| `glitchInterval` | `[number, number]` | `[2000, 6000]` | Min/max interval (ms) between glitch events. |
 | `interactive` | `boolean` | `true` | Track gyroscope / mouse to drive dynamic effects. |
 | `className` | `string` | — | Extra CSS class on the root element. |
 | `style` | `CSSProperties` | — | Inline styles on the root element. |
@@ -185,7 +183,6 @@ On mobile, the component listens to `DeviceOrientationEvent` (beta/gamma axes). 
 ### Animations
 
 - **Flicker** — randomized opacity noise at ~10 Hz.
-- **Glitch** — periodic horizontal displacement + hue burst, triggered on a random interval.
 - **Scanline scroll** — continuous vertical movement.
 
 All animations respect `prefers-reduced-motion: reduce`.

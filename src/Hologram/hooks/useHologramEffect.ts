@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useDeviceOrientation } from './useDeviceOrientation';
 import type { HologramEffectParams } from '../types';
 
@@ -10,18 +10,12 @@ interface UseHologramEffectOptions {
   flickerIntensity?: number;
   /** Enable interactive orientation tracking. @default true */
   interactive?: boolean;
-  /** Enable random glitch bursts. @default true */
-  glitch?: boolean;
-  /** Min/max interval (ms) between glitch bursts. @default [2000,6000] */
-  glitchInterval?: [number, number];
 }
 
 /** Return value of {@link useHologramEffect}. */
 interface UseHologramEffectReturn {
   /** Computed CSS-driving parameters. */
   params: HologramEffectParams;
-  /** Whether a glitch burst is currently active. */
-  isGlitching: boolean;
   /** Which input source drives the orientation ('gyroscope' | 'mouse' | 'none'). */
   orientationSource: 'gyroscope' | 'mouse' | 'none';
 }
@@ -31,15 +25,15 @@ interface UseHologramEffectReturn {
  * animations into concrete hologram visual-effect parameters.
  *
  * It composes {@link useDeviceOrientation} internally and layers flicker
- * and glitch logic on top. The returned params drive CSS custom properties
+ * logic on top. The returned params drive CSS custom properties
  * for both the `foil` and `beam` variants.
  *
  * @param options - Fine-tuning knobs for the effect.
- * @returns Effect parameters, glitch state, and the active orientation source.
+ * @returns Effect parameters and the active orientation source.
  *
  * @example
  * ```tsx
- * const { params, isGlitching } = useHologramEffect({ intensity: 0.8 });
+ * const { params } = useHologramEffect({ intensity: 0.8 });
  * // params.conicAngle, params.lightX, etc. → CSS custom properties
  * ```
  */
@@ -50,8 +44,6 @@ export function useHologramEffect(
     intensity = 0.7,
     flickerIntensity = 0.3,
     interactive = true,
-    glitch = true,
-    glitchInterval = [2000, 6000],
   } = options;
 
   const { orientation, source } = useDeviceOrientation({ enabled: interactive });
@@ -84,35 +76,6 @@ export function useHologramEffect(
     };
   }, [flickerIntensity]);
 
-  // ---- Glitch -------------------------------------------------------
-
-  const [isGlitching, setIsGlitching] = useState(false);
-  const glitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const scheduleGlitch = useCallback(() => {
-    if (!glitch) return;
-
-    const [min, max] = glitchInterval;
-    const delay = min + Math.random() * (max - min);
-
-    glitchTimeoutRef.current = setTimeout(() => {
-      setIsGlitching(true);
-
-      const burstDuration = 100 + Math.random() * 200;
-      setTimeout(() => {
-        setIsGlitching(false);
-        scheduleGlitch();
-      }, burstDuration);
-    }, delay);
-  }, [glitch, glitchInterval]);
-
-  useEffect(() => {
-    scheduleGlitch();
-    return () => {
-      if (glitchTimeoutRef.current !== undefined) clearTimeout(glitchTimeoutRef.current);
-    };
-  }, [scheduleGlitch]);
-
   // ---- Derived params -----------------------------------------------
 
   const params = useMemo<HologramEffectParams>(
@@ -134,5 +97,5 @@ export function useHologramEffect(
     [orientation, intensity, flickerOpacity],
   );
 
-  return { params, isGlitching, orientationSource: source };
+  return { params, orientationSource: source };
 }

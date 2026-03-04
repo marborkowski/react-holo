@@ -34,7 +34,7 @@ import styles from './Hologram.module.css';
  * ### `variant="beam"` — Sci-fi projected hologram
  *
  * A glowing, translucent aesthetic inspired by sci-fi holograms:
- * - Chromatic aberration, scanlines, edge bloom, flicker, and glitch.
+ * - Chromatic aberration, scanlines, edge bloom, and flicker.
  * - Background images are re-graded to a monochromatic holographic palette.
  *
  * @example
@@ -62,8 +62,6 @@ export function Hologram({
   scanlineSpeed = DEFAULTS.scanlineSpeed,
   flickerIntensity = DEFAULTS.flickerIntensity,
   chromaticAberration = DEFAULTS.chromaticAberration,
-  glitch = DEFAULTS.glitch,
-  glitchInterval = DEFAULTS.glitchInterval,
   interactive = DEFAULTS.interactive,
   className,
   style,
@@ -73,12 +71,10 @@ export function Hologram({
   // Resolve default color per variant
   const resolvedColor = color ?? (variant === 'foil' ? 'rainbow' : 'cyan');
 
-  const { params, isGlitching } = useHologramEffect({
+  const { params } = useHologramEffect({
     intensity,
     flickerIntensity,
     interactive,
-    glitch,
-    glitchInterval,
   });
 
   if (variant === 'foil') {
@@ -87,7 +83,6 @@ export function Hologram({
         id={id}
         resolvedColor={resolvedColor}
         params={params}
-        isGlitching={isGlitching}
         scanlineSpeed={scanlineSpeed}
         backgroundImage={backgroundImage}
         className={className}
@@ -103,7 +98,6 @@ export function Hologram({
       id={id}
       resolvedColor={resolvedColor}
       params={params}
-      isGlitching={isGlitching}
       scanlineSpeed={scanlineSpeed}
       chromaticAberration={chromaticAberration}
       backgroundImage={backgroundImage}
@@ -123,7 +117,6 @@ interface FoilProps {
   id: string;
   resolvedColor: string;
   params: ReturnType<typeof useHologramEffect>['params'];
-  isGlitching: boolean;
   scanlineSpeed: number;
   backgroundImage?: string;
   className?: string;
@@ -135,7 +128,6 @@ function FoilHologram({
   id,
   resolvedColor,
   params,
-  isGlitching,
   scanlineSpeed,
   backgroundImage,
   className,
@@ -163,13 +155,7 @@ function FoilHologram({
     '--holo-metal-light': foil.metalLight,
   };
 
-  const rootClasses = [
-    styles.root,
-    isGlitching && styles.glitchActive,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const rootClasses = [styles.root, className].filter(Boolean).join(' ');
 
   const foilLayer = `${styles.foilLayer}`;
 
@@ -220,7 +206,6 @@ interface BeamProps {
   id: string;
   resolvedColor: string;
   params: ReturnType<typeof useHologramEffect>['params'];
-  isGlitching: boolean;
   scanlineSpeed: number;
   chromaticAberration: number;
   backgroundImage?: string;
@@ -233,7 +218,6 @@ function BeamHologram({
   id,
   resolvedColor,
   params,
-  isGlitching,
   scanlineSpeed,
   chromaticAberration,
   backgroundImage,
@@ -260,7 +244,6 @@ function BeamHologram({
   const rootClasses = [
     styles.root,
     styles.beamEdgeGlow,
-    isGlitching && styles.glitchActive,
     resolvedColor === 'rainbow' && styles.beamRainbow,
     className,
   ]

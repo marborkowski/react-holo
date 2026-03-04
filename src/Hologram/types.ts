@@ -151,20 +151,6 @@ export interface HologramProps {
   chromaticAberration?: number;
 
   /**
-   * Whether to enable the random glitch effect.
-   *
-   * @default true
-   */
-  glitch?: boolean;
-
-  /**
-   * Min/max interval in milliseconds between random glitch bursts.
-   *
-   * @default [2000, 6000]
-   */
-  glitchInterval?: [number, number];
-
-  /**
    * Whether to track device gyroscope / mouse position and drive
    * interactive parallax, hue-shift, and light-band effects.
    * When `false`, the hologram renders as a static effect.

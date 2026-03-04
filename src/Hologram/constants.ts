@@ -109,7 +109,5 @@ export const DEFAULTS = {
   scanlineSpeed: 8,
   flickerIntensity: 0.3,
   chromaticAberration: 2,
-  glitch: true,
-  glitchInterval: [2000, 6000] as [number, number],
   interactive: true,
 } as const;
