@@ -1,5 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useDeviceOrientation } from './useDeviceOrientation';
+import {
+  useDeviceOrientation,
+  type DeviceOrientationPermission,
+} from './useDeviceOrientation';
 import type { HologramEffectParams } from '../types';
 
 /** Options accepted by {@link useHologramEffect}. */
@@ -18,6 +21,10 @@ interface UseHologramEffectReturn {
   params: HologramEffectParams;
   /** Which input source drives the orientation ('gyroscope' | 'mouse' | 'none'). */
   orientationSource: 'gyroscope' | 'mouse' | 'none';
+  /** iOS gyroscope permission state. @see DeviceOrientationPermission */
+  permissionState: DeviceOrientationPermission;
+  /** Request gyroscope permission on iOS. Must be called from a user gesture. */
+  requestPermission: () => Promise<DeviceOrientationPermission>;
 }
 
 /**
@@ -46,7 +53,8 @@ export function useHologramEffect(
     interactive = true,
   } = options;
 
-  const { orientation, source } = useDeviceOrientation({ enabled: interactive });
+  const { orientation, source, permissionState, requestPermission } =
+    useDeviceOrientation({ enabled: interactive });
 
   // ---- Flicker ------------------------------------------------------
 
@@ -97,5 +105,5 @@ export function useHologramEffect(
     [orientation, intensity, flickerOpacity],
   );
 
-  return { params, orientationSource: source };
+  return { params, orientationSource: source, permissionState, requestPermission };
 }

@@ -71,11 +71,26 @@ export function Hologram({
   // Resolve default color per variant
   const resolvedColor = color ?? (variant === 'foil' ? 'rainbow' : 'cyan');
 
-  const { params } = useHologramEffect({
+  const { params, permissionState, requestPermission } = useHologramEffect({
     intensity,
     flickerIntensity,
     interactive,
   });
+
+  const permissionOverlay =
+    interactive && permissionState === 'prompt' ? (
+      <button
+        type="button"
+        className={styles.gyroPrompt}
+        onClick={() => void requestPermission()}
+        aria-label="Tap to enable gyroscope-driven holographic effect"
+      >
+        <span className={styles.gyroPromptIcon} aria-hidden>
+          &#x21BB;
+        </span>
+        Tap to enable motion
+      </button>
+    ) : null;
 
   if (variant === 'foil') {
     return (
@@ -87,6 +102,7 @@ export function Hologram({
         backgroundImage={backgroundImage}
         className={className}
         style={style}
+        permissionOverlay={permissionOverlay}
       >
         {children}
       </FoilHologram>
@@ -103,6 +119,7 @@ export function Hologram({
       backgroundImage={backgroundImage}
       className={className}
       style={style}
+      permissionOverlay={permissionOverlay}
     >
       {children}
     </BeamHologram>
@@ -122,6 +139,7 @@ interface FoilProps {
   className?: string;
   style?: CSSProperties;
   children: React.ReactNode;
+  permissionOverlay: React.ReactNode;
 }
 
 function FoilHologram({
@@ -133,6 +151,7 @@ function FoilHologram({
   className,
   style,
   children,
+  permissionOverlay,
 }: FoilProps) {
   const foil = resolveFoilPalette(resolvedColor);
 
@@ -194,6 +213,9 @@ function FoilHologram({
 
       {/* Content (dark print on shiny foil) */}
       <div className={styles.foilContent}>{children}</div>
+
+      {/* iOS gyroscope permission prompt */}
+      {permissionOverlay}
     </div>
   );
 }
@@ -212,6 +234,7 @@ interface BeamProps {
   className?: string;
   style?: CSSProperties;
   children: React.ReactNode;
+  permissionOverlay: React.ReactNode;
 }
 
 function BeamHologram({
@@ -224,6 +247,7 @@ function BeamHologram({
   className,
   style,
   children,
+  permissionOverlay,
 }: BeamProps) {
   const palette = resolveBeamPalette(resolvedColor);
 
@@ -282,6 +306,9 @@ function BeamHologram({
 
       {/* Content */}
       <div className={styles.beamContent}>{children}</div>
+
+      {/* iOS gyroscope permission prompt */}
+      {permissionOverlay}
     </div>
   );
 }
